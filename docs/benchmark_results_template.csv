@@ -1,0 +1,26 @@
+"timestamp","device","ios","build_type","runtime","model_id","model_label","image_id","prompt_id","trial","ttft_sec","tokens_per_sec","elapsed_sec","resident_ram_mb","output_lang_ok","quality_note","error"
+"2026-03-04T22:40:00+09:00","iPhone16","26.x","Debug","native_llama_cpp","moondream2-gguf","moondream2_f16_mmproj","desk_setup","prompt_ja_001","1","2.203","9.2","5.108","2414","""Acomputer desk with a monitor displaying code, a keyboard, a mouse, a cup of coffee, and a potted plant on a windowsill. The desk is positioned against a gery wall with a picture hanging on it.""","",""
+"2026-03-04T22:41:00+09:00","iPhone16","26.x","Debug","native_llama_cpp","moondream2-gguf","moondream2_f16_mmproj","desk_setup","prompt_ja_001","2","2.13","4.46","2.916","3464","3. A computer monitor displaying code on a dark screen.","",""
+"2026-03-04T22:42:00+09:00","iPhone16","26.x","Debug","native_llama_cpp","moondream2-gguf","moondream2_f16_mmproj","desk_setup","prompt_ja_001","3","2.061","6.12","3.267","3751","3. A computer monior, keyboard, mouse, and a coffee mug on a wooden desk.","",""
+"2026-03-04T22:43:00+09:00","iPhone16","26.x","Debug","native_llama_cpp","moondream2-gguf-q4km","moondream2_q4km_mmproj","desk_setup","prompt_ja_001","1","3.247","4.29","3.732","2106","(...other objects in the backgroud, but not in focus) ...))","",""
+"2026-03-04T22:44:00+09:00","iPhone16","26.x","Debug","native_llama_cpp","moondream2-gguf-q4km","moondream2_q4km_mmproj","desk_setup","prompt_ja_001","2","2.21","21.12","6.06","2136","This image depicts a computer setup on a wooden desk. The desktop features a large monitor, a keyboard, a mouse, and a speaker.
+The monitor is turned on, displaying a blue screen with the code visible in the upper left corner. A pair of headphones is placed to the left of the keyboard, suggesting that the user might be listening to music or an audio program while working on the computer. A coffee cup is located near the keyboard, indicating that the user may be enjoying a beverage while working. A cell phone is placed next to the keyboard, showing that the user might be using it for communication or other tasks. A","",""
+"2026-03-04T22:45:00+09:00","iPhone16","26.x","Debug","native_llama_cpp","moondream2-gguf-q4km","moondream2_q4km_mmproj","desk_setup","prompt_ja_001","3","2.218","3.62","2.487","2094","3. A computer monitor displaying code. ","",""
+"2026-03-04T22:46:00+09:00","iPhone16","26.x","Debug","native_llama_cpp","qwen-3.5-vl-0.8b-gguf","qwen35vl08b_q4km_mmproj","desk_setup","prompt_ja_001","1","2.367","16.77","7.632","978","Based on the provided image, here is a detailed description:
+The image depicts a dimly lit, cozy workspace, likely in a home office. The background features dark walls and subtle blue ambient lighting. A prominent monitor is centered on the desk, displaying a code editor with a dark background and light-colored text. To the left of the monitor, a pair of black headphones rests on a stand, and a black mug sits on the right side of the desk.
+In front of the monitor is a black keyboard and a black mouse on a black mousepad.
+A white plant is placed to the right of the monitor.
+Based on this","",""
+"2026-03-04T22:47:00+09:00","iPhone16","26.x","Debug","native_llama_cpp","qwen-3.5-vl-0.8b-gguf","qwen35vl08b_q4km_mmproj","desk_setup","prompt_ja_001","2","1.439","18.91","6.77","982","Here is the image description:
+A cozy, dimly lit room with a wooden desk setup featuring a large screen displaying code. On the left, a pair of headphones with a microphone, a black keyboard, a black mouse on a black mousepad, a smartphone, and a mug. The man's hair is not visible.
+A large computer monitor displaying code
+A pair of headphones
+A keyboard
+A mouse
+A smartphone
+A mug
+These are three key objects in the desk setup. </think>
+**Image Description**
+The image depicts a cozy, dimly lit workspace featuring a wooden desk setup with a large computer","",""
+"2026-03-04T22:48:00+09:00","iPhone16","26.x","Debug","native_llama_cpp","qwen-3.5-vl-0.8b-gguf","qwen35vl08b_q4km_mmproj","desk_setup","prompt_ja_001","3","1.441","4.48","1.785","983","Here is the description of the image:","",""
+"","","","","","","","","","","","","","","","",""

@@ -1,0 +1,16 @@
+.DS_Store
+
+# Local model assets
+Models/
+vlm_test/BundledModels/
+
+# Generated local build outputs
+third_party/llama.cpp/
+third_party/llama.cpp/build-host/
+third_party/llama_artifacts/
+
+# Xcode local build data
+DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
