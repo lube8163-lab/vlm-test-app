@@ -19,6 +19,8 @@ typedef struct vlm_context {
     int32_t n_ctx;
 } vlm_context;
 
+static char g_last_error[512];
+
 static const int32_t k_default_n_ctx = 1024;
 static const int32_t k_default_n_batch = 256;
 static const int32_t k_default_n_threads = 4;
@@ -26,11 +28,12 @@ static const int32_t k_max_first_token_eog_retries = 8;
 static const int32_t k_min_generated_tokens = 24;
 
 static void set_error(vlm_context * ctx, const char * msg) {
-    if (ctx == NULL) {
-        return;
-    }
     if (msg == NULL) {
         msg = "unknown error";
+    }
+    snprintf(g_last_error, sizeof(g_last_error), "%s", msg);
+    if (ctx == NULL) {
+        return;
     }
     snprintf(ctx->last_error, sizeof(ctx->last_error), "%s", msg);
 }
@@ -128,6 +131,7 @@ int vlm_create_context(const char * model_path, const char * mmproj_path, void *
     }
 
     *out_ctx = NULL;
+    g_last_error[0] = '\0';
 
     vlm_context * ctx = (vlm_context *)calloc(1, sizeof(vlm_context));
     if (ctx == NULL) {
@@ -141,7 +145,7 @@ int vlm_create_context(const char * model_path, const char * mmproj_path, void *
 
     ctx->model = llama_model_load_from_file(model_path, mparams);
     if (ctx->model == NULL) {
-        set_error(ctx, "failed to load model file");
+        set_error(ctx, "failed to load model file. This app's bundled llama.cpp likely does not support this model architecture yet (for example: gemma4).");
         vlm_destroy_context(ctx);
         return -3;
     }
@@ -429,10 +433,16 @@ void vlm_destroy_context(void * raw_ctx) {
 const char * vlm_last_error_message(void * raw_ctx) {
     vlm_context * ctx = (vlm_context *)raw_ctx;
     if (ctx == NULL) {
+        if (g_last_error[0] != '\0') {
+            return g_last_error;
+        }
         return "bridge context is null";
     }
 
     if (ctx->last_error[0] == '\0') {
+        if (g_last_error[0] != '\0') {
+            return g_last_error;
+        }
         return "unknown bridge error";
     }
 

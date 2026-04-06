@@ -8,8 +8,12 @@
 import PhotosUI
 import SwiftUI
 import UniformTypeIdentifiers
+import UIKit
 
 struct ContentView: View {
+    private static let imageDescriptionPrompt =
+        "Describe this image in English. First summarize the overall scene in 1-2 sentences. Then list the main visible objects and notable details."
+
     private enum ImportMode {
         case requiredForSelectedModel
         case customModelFiles
@@ -18,11 +22,12 @@ struct ContentView: View {
     @State private var modelsRootPath: String = ContentView.defaultModelsRootPath()
     @State private var selectedModelID: String = ModelCatalog.defaults.first?.id ?? ""
     @State private var selectedRuntime: InferenceRuntime = .nativeLlamaCpp
-    @State private var promptText: String = "Describe this image in English as a Stable Diffusion prompt. Include subject, composition, lighting, camera angle/lens feel, style keywords, and 3 negative prompts."
+    @State private var promptText: String = ContentView.imageDescriptionPrompt
     @State private var outputText: String = ""
 
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
+    @State private var isShowingCamera = false
 
     @State private var isRunning = false
     @State private var errorMessage: String?
@@ -79,7 +84,7 @@ struct ContentView: View {
                             isImportingModelFiles = true
                         }
                         .font(.footnote)
-                        Text("Download model files in the iPhone Files app, then import only the filenames listed below.")
+                        Text("Pick files from anywhere in the iPhone Files app. The app copies them into a model-specific folder under Documents/Models.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -115,6 +120,7 @@ struct ContentView: View {
                     }
                     if let selectedModel {
                         LabeledContent("Backend", value: selectedModel.backend.rawValue)
+                        LabeledContent("Model folder", value: selectedModel.relativeDirectory)
                         if modelMissingFiles.isEmpty {
                             Label("Required files found", systemImage: "checkmark.circle.fill")
                                 .foregroundStyle(.green)
@@ -126,18 +132,36 @@ struct ContentView: View {
                                     Text("- \(file)")
                                         .font(.caption)
                                 }
+                                if let sourceURL = selectedModel.sourceURL,
+                                   let url = URL(string: sourceURL) {
+                                    Link(destination: url) {
+                                        Text("Download reference: \(sourceURL)")
+                                            .font(.caption)
+                                    }
+                                }
                             }
                         }
                     }
                 }
 
                 Section("Input") {
-                    PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                        Label(selectedImage == nil ? "Pick Image" : "Change Image", systemImage: "photo")
-                    }
-                    .onChange(of: selectedPhotoItem) { _, _ in
-                        Task {
-                            await loadSelectedImage()
+                    HStack {
+                        PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                            Label(selectedImage == nil ? "Pick Image" : "Change Image", systemImage: "photo")
+                        }
+                        .onChange(of: selectedPhotoItem) { _, _ in
+                            Task {
+                                await loadSelectedImage()
+                            }
+                        }
+
+                        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                            Button {
+                                isPromptFocused = false
+                                isShowingCamera = true
+                            } label: {
+                                Label("Take Photo", systemImage: "camera")
+                            }
                         }
                     }
 
@@ -147,6 +171,15 @@ struct ContentView: View {
                             .scaledToFit()
                             .frame(maxHeight: 220)
                     }
+
+                    Button("Describe Image") {
+                        Task {
+                            isPromptFocused = false
+                            await runDescribeImage()
+                        }
+                    }
+                    .disabled(selectedImage == nil || selectedModel == nil || modelMissingFiles.isEmpty == false || isRunning)
+                    .font(.footnote)
 
                     TextField("Prompt", text: $promptText, axis: .vertical)
                         .lineLimit(3...8)
@@ -211,6 +244,9 @@ struct ContentView: View {
             ) { result in
                 handleImport(result)
             }
+            .sheet(isPresented: $isShowingCamera) {
+                CameraPicker(image: $selectedImage)
+            }
         }
     }
 
@@ -274,6 +310,12 @@ struct ContentView: View {
         }
     }
 
+    private func runDescribeImage() async {
+        guard selectedImage != nil else { return }
+        promptText = Self.imageDescriptionPrompt
+        await runTest()
+    }
+
     private static func defaultModelsRootPath() -> String {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
         let models = docs?.appendingPathComponent("Models", isDirectory: true)
@@ -318,25 +360,22 @@ struct ContentView: View {
         let destinationDir = model.destinationDirectoryURL(in: modelsRootURL)
         try fm.createDirectory(at: destinationDir, withIntermediateDirectories: true)
 
-        let required = Set(model.requiredFiles)
+        let plan = try importPlan(for: model, urls: urls)
         var copied = 0
 
-        for url in urls {
-            let fileName = url.lastPathComponent
-            guard required.contains(fileName) else { continue }
-
-            let accessed = url.startAccessingSecurityScopedResource()
+        for (source, destinationName) in plan {
+            let accessed = source.startAccessingSecurityScopedResource()
             defer {
                 if accessed {
-                    url.stopAccessingSecurityScopedResource()
+                    source.stopAccessingSecurityScopedResource()
                 }
             }
 
-            let destination = model.destinationFileURL(fileName: fileName, in: modelsRootURL)
+            let destination = model.destinationFileURL(fileName: destinationName, in: modelsRootURL)
             if fm.fileExists(atPath: destination.path) {
                 try fm.removeItem(at: destination)
             }
-            try fm.copyItem(at: url, to: destination)
+            try fm.copyItem(at: source, to: destination)
             copied += 1
         }
 
@@ -382,7 +421,8 @@ struct ContentView: View {
             relativeDirectory: dirName,
             requiredFiles: mmproj.map { [main, $0] } ?? [main],
             mainModelFile: main,
-            mmprojFile: mmproj
+            mmprojFile: mmproj,
+            sourceURL: nil
         )
         print("[VLM][IMPORT] custom_model=\(model.id)")
         return model
@@ -394,6 +434,95 @@ struct ContentView: View {
         let raw = String(scalarView)
         let collapsed = raw.replacingOccurrences(of: "-+", with: "-", options: .regularExpression)
         return collapsed.trimmingCharacters(in: CharacterSet(charactersIn: "-")).lowercased()
+    }
+
+    private func importPlan(for model: LocalModelOption, urls: [URL]) throws -> [(URL, String)] {
+        var exactMatches: [String: URL] = [:]
+        for url in urls where exactMatches[url.lastPathComponent] == nil {
+            exactMatches[url.lastPathComponent] = url
+        }
+        if model.requiredFiles.allSatisfy({ exactMatches[$0] != nil }) {
+            return model.requiredFiles.compactMap { fileName in
+                exactMatches[fileName].map { ($0, fileName) }
+            }
+        }
+
+        let ggufURLs = urls.filter { $0.pathExtension.lowercased() == "gguf" }
+        guard let mainModelFile = model.mainModelFile else {
+            throw NSError(domain: "VLMImport", code: 2, userInfo: [
+                NSLocalizedDescriptionKey: "This model does not define a main GGUF filename."
+            ])
+        }
+
+        let mmprojCandidate = ggufURLs.first { $0.lastPathComponent.lowercased().contains("mmproj") }
+        let mainCandidate = ggufURLs.first { $0 != mmprojCandidate }
+
+        var plan: [(URL, String)] = []
+
+        if let exactMain = exactMatches[mainModelFile] {
+            plan.append((exactMain, mainModelFile))
+        } else if let mainCandidate {
+            plan.append((mainCandidate, mainModelFile))
+        }
+
+        if let mmprojFile = model.mmprojFile {
+            if let exactMMProj = exactMatches[mmprojFile] {
+                plan.append((exactMMProj, mmprojFile))
+            } else if let mmprojCandidate {
+                plan.append((mmprojCandidate, mmprojFile))
+            }
+        }
+
+        let plannedNames = Set(plan.map(\.1))
+        let missing = model.requiredFiles.filter { plannedNames.contains($0) == false }
+        if missing.isEmpty == false {
+            throw NSError(domain: "VLMImport", code: 3, userInfo: [
+                NSLocalizedDescriptionKey: "Missing import candidates for: \(missing.joined(separator: ", "))"
+            ])
+        }
+
+        return plan
+    }
+}
+
+private struct CameraPicker: UIViewControllerRepresentable {
+    @Binding var image: UIImage?
+    @Environment(\.dismiss) private var dismiss
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.cameraCaptureMode = .photo
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+
+    final class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+        private let parent: CameraPicker
+
+        init(_ parent: CameraPicker) {
+            self.parent = parent
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
+        }
+
+        func imagePickerController(
+            _ picker: UIImagePickerController,
+            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
+        ) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.image = image
+            }
+            parent.dismiss()
+        }
     }
 }
 

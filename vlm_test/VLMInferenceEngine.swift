@@ -157,9 +157,10 @@ enum VLMInferenceEngine {
             return try bridge.run(prompt: prompt, imagePath: imagePath)
         } catch let LlamaCppBridgeError.runFailed(code, message) where code == -13 {
             let fallbackPrompt = """
-            Describe this image in English in one paragraph.
-            Then list exactly 3 key objects.
-            If there is visible text in the image, include it.
+            Describe this image in English.
+            First summarize the overall scene in 1-2 sentences.
+            Then list exactly 3 main visible objects.
+            Include any visible text if present.
             """
             print("[VLM][RETRY] reason=no-token-generated code=\(code) message=\(message)")
             return try bridge.run(prompt: fallbackPrompt, imagePath: imagePath)

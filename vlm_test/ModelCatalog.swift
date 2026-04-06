@@ -13,6 +13,7 @@ struct LocalModelOption: Identifiable, Hashable {
     let requiredFiles: [String]
     let mainModelFile: String?
     let mmprojFile: String?
+    let sourceURL: String?
 
     func destinationDirectoryURL(in modelsRoot: URL) -> URL {
         modelsRoot.appendingPathComponent(relativeDirectory, isDirectory: true)
@@ -49,7 +50,8 @@ enum ModelCatalog {
             relativeDirectory: "qwen3_5_0_8b_gguf",
             requiredFiles: ["Qwen3.5-0.8B-Q4_K_M.gguf"],
             mainModelFile: "Qwen3.5-0.8B-Q4_K_M.gguf",
-            mmprojFile: nil
+            mmprojFile: nil,
+            sourceURL: "https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF"
         ),
         LocalModelOption(
             id: "moondream2-gguf",
@@ -58,7 +60,8 @@ enum ModelCatalog {
             relativeDirectory: "moondream2",
             requiredFiles: ["moondream2-text-model-f16.gguf", "moondream2-mmproj-f16.gguf"],
             mainModelFile: "moondream2-text-model-f16.gguf",
-            mmprojFile: "moondream2-mmproj-f16.gguf"
+            mmprojFile: "moondream2-mmproj-f16.gguf",
+            sourceURL: "https://huggingface.co/vikhyatk/moondream2"
         ),
         LocalModelOption(
             id: "moondream2-gguf-q4km",
@@ -67,7 +70,8 @@ enum ModelCatalog {
             relativeDirectory: "moondream2",
             requiredFiles: ["moondream2-text-model-q4_k_m.gguf", "moondream2-mmproj-f16.gguf"],
             mainModelFile: "moondream2-text-model-q4_k_m.gguf",
-            mmprojFile: "moondream2-mmproj-f16.gguf"
+            mmprojFile: "moondream2-mmproj-f16.gguf",
+            sourceURL: "https://huggingface.co/vikhyatk/moondream2"
         ),
         LocalModelOption(
             id: "qwen-3.5-vl-0.8b-gguf",
@@ -76,7 +80,18 @@ enum ModelCatalog {
             relativeDirectory: "qwen3_5_vl_0_8b_gguf",
             requiredFiles: ["Qwen3.5-0.8B-Q4_K_M.gguf", "mmproj-F16.gguf"],
             mainModelFile: "Qwen3.5-0.8B-Q4_K_M.gguf",
-            mmprojFile: "mmproj-F16.gguf"
+            mmprojFile: "mmproj-F16.gguf",
+            sourceURL: "https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF"
+        ),
+        LocalModelOption(
+            id: "gemma-4-e2b-it-gguf",
+            displayName: "Gemma 4 E2B-It (GGUF + mmproj)",
+            backend: .ggufLlamaCpp,
+            relativeDirectory: "gemma4_e2b_it_gguf",
+            requiredFiles: ["gemma-4-E2B-it-Q4_K_M.gguf", "mmproj-F16.gguf"],
+            mainModelFile: "gemma-4-E2B-it-Q4_K_M.gguf",
+            mmprojFile: "mmproj-F16.gguf",
+            sourceURL: "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF"
         )
     ]
 
@@ -133,7 +148,8 @@ enum ModelCatalog {
                         relativeDirectory: entry.lastPathComponent,
                         requiredFiles: required,
                         mainModelFile: main,
-                        mmprojFile: mmproj
+                        mmprojFile: mmproj,
+                        sourceURL: nil
                     )
                 )
             }

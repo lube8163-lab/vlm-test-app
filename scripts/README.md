@@ -28,10 +28,17 @@ cd /Users/tasuku/Desktop/vlm_test
 QWEN_VL_GGUF_REPO=unsloth/Qwen3.5-0.8B-GGUF bash scripts/download_models.sh
 ```
 
+Gemma 4 E2B-It 用 GGUF + mmproj を取得する場合:
+```bash
+cd /Users/tasuku/Desktop/vlm_test
+GEMMA4_VL_GGUF_REPO=unsloth/gemma-4-E2B-it-GGUF bash scripts/download_models.sh
+```
+
 注意:
 - これらのダウンロード先 `Models/` はローカル作業用です。Git 管理対象ではありません。
 - 実機では、必要ファイルを Files アプリに保存してから、アプリ内の `Import Required Files from Files` で取り込みます。
 - 未登録モデルは `Import Custom GGUF/mmproj from Files` を使います。
+- Gemma 4 E2B-It は `Qwen3.5-VL-0.8B` よりかなり大きく、実機メモリ余裕が必要です。
 
 ## 2) CoreML 変換 PoC（任意）
 ```bash
